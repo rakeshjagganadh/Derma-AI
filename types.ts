@@ -7,7 +7,14 @@ export interface DetailedDiagnosis {
   };
   zones: ZoneAnalysis[];
   positiveAttributes: string[]; // List of strengths (e.g. "Strong Barrier")
+  lifestyle_triggers: LifestyleTrigger[]; // New: Face Mapping Logic
   summary: string;
+}
+
+export interface LifestyleTrigger {
+  issue: string; // e.g. "Right Cheek Acne"
+  trigger: string; // e.g. "Dirty Pillowcase"
+  habit: string; // e.g. "Change pillowcase every 2 days"
 }
 
 export interface ZoneAnalysis {
@@ -41,13 +48,25 @@ export interface ProductRecommendation {
   approxPrice: string;
 }
 
+export interface RoutineStep {
+  stepName: string; // "Cleanse", "Treat", "Moisturize", "Protect"
+  productName: string; // Matches a product in essentialKit
+  action: string; // "Massage", "Pat", "Dab"
+  duration: string; // "60 seconds"
+  surface: string; // "Damp skin"
+  technique: string; // "Circular motions upward"
+  proTip: string; // Esthetician hack
+  frequency?: string; // "Daily" or "3x/week"
+}
+
 export interface RoutineResult {
   routineGoal: string; // e.g. "The Repair Protocol"
   essentialKit: ProductRecommendation[]; // Items that fit the budget
   recommendedAddon?: ProductRecommendation; // The item skipped due to budget (optional)
   compromiseNote?: string; // Explanation of the trade-off
-  amRoutine: string[];
-  pmRoutine: string[];
+  safety_warnings: { type: string; warning: string }[]; // New: Ingredient conflicts
+  amRoutine: RoutineStep[];
+  pmRoutine: RoutineStep[];
 }
 
 export enum AppStep {

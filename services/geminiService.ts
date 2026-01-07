@@ -23,6 +23,62 @@ export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { 
   });
 };
 
+// --- VALIDATION LOGIC ---
+
+const validationSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    isValid: { type: Type.BOOLEAN, description: "True ONLY if a clear real human face is detected. False for objects, animals, blurry blobs, or photos of screens." },
+    detectedAngle: { type: Type.STRING, enum: ['front', 'side', 'other'], description: "The angle of the face." },
+    message: { type: Type.STRING, description: "Short error message if invalid, or confirmation if valid." }
+  },
+  required: ["isValid", "detectedAngle", "message"]
+};
+
+export interface ValidationResult {
+  isValid: boolean;
+  detectedAngle: 'front' | 'side' | 'other';
+  message: string;
+}
+
+export const validateImage = async (file: File, expectedView: 'front' | 'side'): Promise<ValidationResult> => {
+  const imagePart = await fileToGenerativePart(file);
+  
+  const prompt = `
+    You are an AI Gatekeeper for a Dermatology App. Validate this image.
+    
+    CRITERIA:
+    1. Is it a CLEAR, REAL Human Face? (Reject drawings, dark photos, blurry photos, body parts, objects).
+    2. Check the Angle. Expected: ${expectedView === 'front' ? 'Frontal View' : 'Side Profile'}.
+    3. Anti-Spoofing: Reject if it looks like a photo of a computer screen or a low-quality printout.
+
+    Output JSON.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview', // Use Flash for speed
+      contents: {
+        parts: [imagePart.inlineData, { text: prompt }]
+      },
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: validationSchema,
+        temperature: 0.1,
+      }
+    });
+
+    if (!response.text) return { isValid: false, detectedAngle: 'other', message: 'AI Validation Failed' };
+    return JSON.parse(response.text) as ValidationResult;
+  } catch (error) {
+    console.error("Validation Error", error);
+    // Fallback: Allow upload if API fails, but log it
+    return { isValid: true, detectedAngle: expectedView, message: 'Validation bypassed due to network' };
+  }
+};
+
+// --- DIAGNOSIS LOGIC ---
+
 const diagnosisSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -40,6 +96,19 @@ const diagnosisSchema: Schema = {
       type: Type.ARRAY,
       items: { type: Type.STRING },
       description: "List of 3-5 positive traits detected (e.g. 'Strong Barrier', 'Even Tone', 'Good Elasticity')."
+    },
+    lifestyle_triggers: {
+      type: Type.ARRAY,
+      description: "Map specific visible issues to lifestyle habits using 'Face Mapping' logic.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          issue: { type: Type.STRING, description: "The specific observed issue (e.g., 'Right Cheek Acne')." },
+          trigger: { type: Type.STRING, description: "The lifestyle cause (e.g., 'Dirty Pillowcase or Phone Screen')." },
+          habit: { type: Type.STRING, description: "Simple habit change (e.g., 'Wipe phone daily, change pillowcase')." }
+        },
+        required: ["issue", "trigger", "habit"]
+      }
     },
     zones: {
       type: Type.ARRAY,
@@ -59,7 +128,7 @@ const diagnosisSchema: Schema = {
                 medicalTerm: { type: Type.STRING, description: "Medical term e.g., Acne Vulgaris" },
                 category: { type: Type.STRING, enum: ['Inflammation', 'Dryness', 'Pigmentation', 'Texture', 'Aging'] },
                 severity: { type: Type.STRING, enum: ['Mild', 'Moderate', 'Severe'] },
-                rootCause: { type: Type.STRING, description: "Why this is happening to YOU. Be specific about location (e.g., 'Friction on Left Jawline')." },
+                rootCause: { type: Type.STRING, description: "Why this is happening to YOU. Be specific about location (e.g., 'Friction on Left Jawline'). USE PLAIN ENGLISH." },
                 cureStrategy: { type: Type.STRING, description: "How YOU can fix it. Direct advice." },
                 locations: {
                   type: Type.ARRAY,
@@ -83,7 +152,7 @@ const diagnosisSchema: Schema = {
     },
     summary: { type: Type.STRING, description: "A final Clinical Note. Mention specific side-profile issues if they differ from the front." }
   },
-  required: ["faceArchitecture", "positiveAttributes", "zones", "summary"]
+  required: ["faceArchitecture", "positiveAttributes", "lifestyle_triggers", "zones", "summary"]
 };
 
 export const analyzeSkin = async (
@@ -107,16 +176,25 @@ export const analyzeSkin = async (
     - You are analyzing three angles of the same person. 
     - Cross-reference findings. If a dark spot is visible on the 'Left Profile' but hidden in the 'Front Face', you MUST report it.
     - Do not ignore side-profile exclusive issues (e.g., hormonal acne on jawline, sun spots on cheeks).
-    - In your text analysis (Root Cause), explicitly mention the location context (e.g., "The Grade 3 acne is concentrated on your Left Jawline, suggesting...").
+    - In your text analysis (Root Cause), explicitly mention the location context.
 
-    TONE: 
-    - Clinical, Neutral, and Objective.
-    - No fake enthusiasm.
+    FACE MAPPING LOGIC (Use this for 'lifestyle_triggers'):
+    - Right Cheek Acne -> Trigger: "Dirty Pillowcase or Phone Screen bacteria".
+    - Jawline Acne -> Trigger: "Hormonal fluctuations or Stress".
+    - Forehead Bumps -> Trigger: "Dandruff, Hair Products (Pomade Acne) or Digestion".
+    - Around Mouth -> Trigger: "Fluoride Toothpaste residue or Lip Balm clogging".
+    - Nose Blackheads -> Trigger: "Excess Oil Production".
+
+    TONE CHECK: 
+    - Use Plain English. 
+    - BAD: "Hyperkeratinization observed."
+    - GOOD: "Dead skin cells are blocking your pores."
+    - BAD: "Erythema detected."
+    - GOOD: "Visible redness and inflammation."
 
     OUTPUT:
     - Output STRICT JSON matching the schema.
     - For 'locations', you MUST generate bounding boxes for the specific view where the issue is visible. 
-    - An issue can have multiple location entries if visible in multiple views.
   `;
 
   const response = await ai.models.generateContent({
@@ -160,23 +238,29 @@ export const getRoutineRecommendation = async (
 
     User's Budget: ${budget} (INR).
 
-    Task: Recommend a "Budget Reality" Skincare Routine.
-    Address the user as "You".
+    Task: Recommend a "Budget Reality" Skincare Routine and perform a Safety Check.
+    Act as an ESTHETICIAN teaching a client how to physically apply products.
 
     1. Routine Goal: Medical name (e.g., "The Repair Protocol").
     
-    2. Product Logic (The "Must-Have" vs "Gap Analysis"):
-       - **Rule #1 (Non-Negotiable):** Sunscreen is MANDATORY. It must always be in the 'essentialKit'.
-       - **Rule #2 (Essential Kit):** Recommend 3-5 items that strictly fit within the INR budget. Prioritize the worst problems (e.g., Acne > Aging).
-       - **Rule #3 (Add-on / Compromise):** If the budget forces you to drop a necessary item (e.g., Eye Cream for dark circles or a second serum), put it in 'recommendedAddon'.
-       - **Rule #4 (Compromise Note):** If you dropped an item, explain why in 'compromiseNote' (e.g., "Based on your ₹1000 limit, we prioritized curing your active acne. We skipped the Eye Cream for now.").
+    2. Product Logic:
+       - **Rule #1:** Sunscreen is MANDATORY.
+       - **Rule #2:** Recommend 3-5 items that fit within the budget.
+       - **Rule #3:** If budget restricts a needed item (e.g. eye cream), put it in 'recommendedAddon'.
 
-    3. Product Details:
-       - Explain "Why this specific bottle?" linking to diagnosis.
-       - Key Ingredients.
-       - Usage Instructions.
+    3. SAFETY PROTOCOL:
+       - Cross-reference ingredients (Salicylic Acid, Retinol, etc).
+       - Generate warnings for sun sensitivity or mixing conflicts.
+    
+    4. RITUAL GUIDE (Crucial):
+       - Do not just list the name. 
+       - Provide 'action' (Massage, Pat, Dab).
+       - Provide 'duration' (60s, until absorbed).
+       - Provide 'technique' (Circular motions, Upward strokes).
+       - Provide 'proTip' (A one sentence hack).
+       - **NIGHT ROUTINE RULE:** For the final step of the PM routine (Moisturizer), set the instruction to: "Apply a thick layer 30 mins before pillow contact to lock in moisture overnight."
 
-    4. Brands: Minimalist, Cetaphil, Derma Co, Sebamed, CeraVe, Bioderma, La Roche-Posay, Dot & Key.
+    Brands: Minimalist, Cetaphil, Derma Co, Sebamed, CeraVe, Bioderma, La Roche-Posay, Dot & Key.
 
     Output JSON structure:
     {
@@ -184,10 +268,17 @@ export const getRoutineRecommendation = async (
       "essentialKit": [
         { "category": "...", "brand": "...", "name": "...", "reason": "...", "keyIngredients": ["..."], "usageInstructions": "...", "approxPrice": "..." }
       ],
-      "recommendedAddon": { "category": "...", "brand": "...", "name": "...", "reason": "...", "keyIngredients": ["..."], "usageInstructions": "...", "approxPrice": "..." } (OR null),
-      "compromiseNote": "String" (OR null),
-      "amRoutine": ["..."],
-      "pmRoutine": ["..."]
+      "recommendedAddon": { "category": "...", "brand": "...", "name": "...", "reason": "...", "keyIngredients": ["..."], "usageInstructions": "...", "approxPrice": "..." },
+      "compromiseNote": "String",
+      "safety_warnings": [
+         { "type": "Sun Alert" | "Conflict" | "General", "warning": "..." }
+      ],
+      "amRoutine": [
+        { "stepName": "Cleanse", "productName": "...", "action": "Massage", "duration": "60s", "surface": "Damp Skin", "technique": "...", "proTip": "...", "frequency": "Daily" }
+      ],
+      "pmRoutine": [
+        { "stepName": "Cleanse", "productName": "...", "action": "Massage", "duration": "60s", "surface": "Damp Skin", "technique": "...", "proTip": "...", "frequency": "Daily" }
+      ]
     }
   `;
 

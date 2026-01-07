@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BudgetOption, RoutineResult } from '../types';
+import { BudgetOption, RoutineResult, RoutineStep } from '../types';
 
 interface ProductRecommenderProps {
   onBudgetSelect: (budget: BudgetOption) => void;
@@ -10,6 +10,11 @@ interface ProductRecommenderProps {
 
 const ProductRecommender: React.FC<ProductRecommenderProps> = ({ onBudgetSelect, routine, loading, onReset }) => {
   const [selectedBudget, setSelectedBudget] = useState<BudgetOption | null>(null);
+
+  const handleFindProduct = (brand: string, name: string) => {
+    const query = encodeURIComponent(`${brand} ${name}`);
+    window.open(`https://www.google.com/search?q=${query}`, '_blank');
+  };
 
   if (!routine && !loading) {
     return (
@@ -50,6 +55,67 @@ const ProductRecommender: React.FC<ProductRecommenderProps> = ({ onBudgetSelect,
        </div>
      );
   }
+
+  // Helper to get step icon
+  const getStepIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('cleanse')) return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />; // Drop/Playish
+    if (n.includes('treat') || n.includes('serum')) return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />; // Flask
+    if (n.includes('moisturize')) return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />; // Cloud/Cream
+    if (n.includes('protect') || n.includes('sun')) return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />; // Sun
+    return <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />; // Check
+  };
+
+  const TimelineStep: React.FC<{ step: RoutineStep; index: number; type: 'AM' | 'PM' }> = ({ step, index, type }) => {
+    const isLast = false; // Simplified for this view, logic handled by CSS generally
+    const colorClass = type === 'AM' ? 'text-amber-600 bg-amber-100 border-amber-200' : 'text-indigo-600 bg-indigo-100 border-indigo-200';
+    const accentClass = type === 'AM' ? 'text-amber-600' : 'text-indigo-600';
+
+    return (
+      <div className="relative pl-8 pb-8 border-l-2 border-slate-200 last:border-0 last:pb-0">
+        {/* Timeline Dot/Icon */}
+        <div className={`absolute -left-[17px] top-0 w-8 h-8 rounded-full border-2 border-white flex items-center justify-center ${colorClass} shadow-sm z-10`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             {getStepIcon(step.stepName)}
+          </svg>
+        </div>
+
+        {/* Content Card */}
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 hover:border-slate-300 transition-colors group">
+          <div className="flex justify-between items-start mb-2">
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${type === 'AM' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}`}>
+              Step {index + 1}: {step.stepName}
+            </span>
+            {step.frequency && (
+              <span className="text-[10px] text-slate-400 font-medium">{step.frequency}</span>
+            )}
+          </div>
+          
+          <h4 className="font-bold text-slate-800 text-lg mb-2">{step.productName}</h4>
+          
+          {/* Instructional Sentence */}
+          <div className="text-sm text-slate-600 mb-3 leading-relaxed">
+            <span className={`font-bold ${accentClass}`}>{step.action}</span> for <span className="font-semibold text-slate-700">{step.duration}</span> on <span className="italic text-slate-700">{step.surface}</span>.
+            {step.technique && (
+               <span className="block mt-1 text-slate-500">Technique: {step.technique}</span>
+            )}
+          </div>
+
+          {/* Pro Tip Tooltip/Card */}
+          {step.proTip && (
+            <div className="flex items-start gap-2 mt-2 pt-2 border-t border-slate-200/60">
+               <div className={`mt-0.5 ${accentClass}`}>
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+               </div>
+               <p className="text-xs text-slate-500 italic">
+                 <span className="font-bold">Esthetician Tip:</span> {step.proTip}
+               </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (routine) {
     return (
@@ -95,7 +161,12 @@ const ProductRecommender: React.FC<ProductRecommenderProps> = ({ onBudgetSelect,
 
                   <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
                     <span className="font-semibold text-slate-800">{product.approxPrice}</span>
-                    <button className="text-xs bg-medical-600 text-white px-4 py-2 rounded-lg hover:bg-medical-700 transition-colors">Find</button>
+                    <button 
+                      onClick={() => handleFindProduct(product.brand, product.name)}
+                      className="text-xs bg-medical-600 text-white px-4 py-2 rounded-lg hover:bg-medical-700 transition-colors"
+                    >
+                      Find
+                    </button>
                   </div>
                 </div>
               </div>
@@ -123,50 +194,87 @@ const ProductRecommender: React.FC<ProductRecommenderProps> = ({ onBudgetSelect,
                    <h4 className="font-bold text-slate-800">{routine.recommendedAddon.brand}</h4>
                    <p className="text-sm text-slate-600 mb-2">{routine.recommendedAddon.name}</p>
                    <p className="text-xs text-slate-500 italic">"{routine.recommendedAddon.reason}"</p>
+                   <button 
+                      onClick={() => handleFindProduct(routine.recommendedAddon!.brand, routine.recommendedAddon!.name)}
+                      className="w-full mt-3 text-xs bg-amber-100 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-200 transition-colors font-bold"
+                    >
+                      Find Online
+                    </button>
                 </div>
              </div>
           )}
         </section>
 
-        {/* Routine Timeline */}
-        <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-          <h3 className="text-2xl font-bold text-slate-800 mb-8 text-center">Your Daily Protocol</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        {/* Safety Protocol */}
+        {routine.safety_warnings && routine.safety_warnings.length > 0 && (
+          <section className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl shadow-sm">
+             <div className="flex items-start gap-3">
+                <div className="p-2 bg-red-100 rounded-full text-red-600 mt-1">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div>
+                   <h3 className="text-lg font-bold text-red-900 mb-1">Safety Protocols & Warnings</h3>
+                   <p className="text-sm text-red-700 mb-4">Please observe these precautions to prevent irritation or damage.</p>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {routine.safety_warnings.map((warn, i) => (
+                         <div key={i} className="bg-white p-3 rounded border border-red-100 flex items-start gap-2">
+                            <span className="text-lg">
+                              {warn.type === 'Sun Alert' ? '☀️' : warn.type === 'Conflict' ? '🧪' : '⚠️'}
+                            </span>
+                            <div>
+                               <p className="text-xs font-bold text-red-800 uppercase">{warn.type}</p>
+                               <p className="text-sm text-slate-700">{warn.warning}</p>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+             </div>
+          </section>
+        )}
+
+        {/* Detailed Ritual Guide */}
+        <section className="bg-white rounded-3xl shadow-lg border border-slate-100 p-8">
+          <h3 className="text-2xl font-bold text-slate-800 mb-8 text-center">Your Daily Ritual Guide</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             
             {/* AM Routine */}
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-amber-100">
+                <div className="p-3 bg-amber-100 text-amber-600 rounded-xl shadow-sm">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                 </div>
-                <h4 className="text-xl font-semibold text-slate-800">Morning (AM)</h4>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-800">Morning (AM)</h4>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Protect & Prevent</p>
+                </div>
               </div>
-              <ul className="space-y-4">
-                {routine.amRoutine.map((step, i) => (
-                  <li key={i} className="flex gap-4">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                    <p className="text-slate-600 text-sm">{step}</p>
-                  </li>
-                ))}
-              </ul>
+              
+              <div className="space-y-2">
+                 {routine.amRoutine.map((step, i) => (
+                    <TimelineStep key={i} step={step} index={i} type="AM" />
+                 ))}
+              </div>
             </div>
 
             {/* PM Routine */}
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                 <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-indigo-100">
+                 <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl shadow-sm">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                 </div>
-                <h4 className="text-xl font-semibold text-slate-800">Evening (PM)</h4>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-800">Night Repair Ritual</h4>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Treat & Restore</p>
+                </div>
               </div>
-              <ul className="space-y-4">
-                {routine.pmRoutine.map((step, i) => (
-                  <li key={i} className="flex gap-4">
-                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-500 text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                    <p className="text-slate-600 text-sm">{step}</p>
-                  </li>
-                ))}
-              </ul>
+              
+              <div className="space-y-2">
+                 {routine.pmRoutine.map((step, i) => (
+                    <TimelineStep key={i} step={step} index={i} type="PM" />
+                 ))}
+              </div>
             </div>
           </div>
         </section>

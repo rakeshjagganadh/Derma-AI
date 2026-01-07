@@ -1,5 +1,5 @@
 {
-  "name": "DermaAI: Face Analyzer & Routine",
+  "name": "DermaAI",
   "description": "AI-powered dermatologist app providing skin diagnosis, personalized routines, and aesthetic tools.",
   "requestFramePermissions": [
     "camera"
