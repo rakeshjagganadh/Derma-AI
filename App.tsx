@@ -140,7 +140,7 @@ const App: React.FC = () => {
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-medical-600 to-teal-500">AI Dermatologist.</span>
                             </h1>
                             <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg">
-                                Get a medical-grade analysis of acne, texture, and aging markers in 3 seconds. 
+                                Get a medical-grade analysis of your Face in 10 seconds. 
                                 <span className="font-semibold text-slate-900"> 100% Private.</span>
                             </p>
                             <div className="flex flex-col sm:flex-row gap-6 mb-10">
@@ -331,7 +331,7 @@ const App: React.FC = () => {
                   <ProductRecommender 
                     onBudgetSelect={handleBudgetSelect} 
                     routine={routine} 
-                    loading={loading && step !== AppStep.ANALYZING}
+                    loading={loading}
                     onReset={handleReset}
                   />
                 )}

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { DetailedDiagnosis, RoutineResult, BudgetOption } from "../types";
+import { DetailedDiagnosis, RoutineResult, BudgetOption, AspectRatio, ImageSize } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -10,11 +10,19 @@ export const fileToGenerativePart = async (file: File): Promise<{ inlineData: { 
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64Data = reader.result as string;
+      if (!base64Data) {
+        reject(new Error("Failed to read file data"));
+        return;
+      }
       const base64Content = base64Data.split(',')[1];
+      if (!base64Content) {
+        reject(new Error("Failed to extract base64 string"));
+        return;
+      }
       resolve({
         inlineData: {
           data: base64Content,
-          mimeType: file.type,
+          mimeType: file.type || 'image/jpeg',
         },
       });
     };
@@ -57,9 +65,9 @@ export const validateImage = async (file: File, expectedView: 'front' | 'side'):
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // Use Flash for speed
+      model: 'gemini-3-flash-preview', 
       contents: {
-        parts: [imagePart.inlineData, { text: prompt }]
+        parts: [imagePart, { text: prompt }]
       },
       config: {
         responseMimeType: 'application/json',
@@ -210,7 +218,7 @@ export const analyzeSkin = async (
     config: {
       responseMimeType: 'application/json',
       responseSchema: diagnosisSchema,
-      temperature: 0.1, // Very low for consistency
+      temperature: 0.1,
       thinkingConfig: { thinkingBudget: 2048 }
     }
   });
@@ -297,42 +305,59 @@ export const getRoutineRecommendation = async (
   return JSON.parse(text) as RoutineResult;
 };
 
-export const editImage = async (imageFile: File, instruction: string): Promise<string> => {
-  const imagePart = await fileToGenerativePart(imageFile);
+// --- TOOLS: IMAGE EDITING ---
+
+export const editImage = async (file: File, prompt: string): Promise<string | null> => {
+  const imagePart = await fileToGenerativePart(file);
+  
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
       parts: [
-        imagePart.inlineData,
-        { text: instruction }
+        imagePart,
+        { text: prompt }
       ]
     }
   });
 
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+  // Extract result image
+  const parts = response.candidates?.[0]?.content?.parts;
+  if (parts) {
+    for (const part of parts) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
     }
   }
-  throw new Error("No image generated");
+  return null;
 };
 
-export const generateImage = async (prompt: string, aspectRatio: string, size: string): Promise<string> => {
+// --- TOOLS: IMAGE GENERATION ---
+
+export const generateImage = async (prompt: string, aspectRatio: AspectRatio, imageSize: ImageSize): Promise<string | null> => {
+  // Use Pro for high res, Flash for standard
+  const model = (imageSize === '2K' || imageSize === '4K') ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
+  
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-image-preview',
-    contents: { parts: [{ text: prompt }] },
+    model: model,
+    contents: {
+      parts: [{ text: prompt }]
+    },
     config: {
       imageConfig: {
-        aspectRatio: aspectRatio as any,
-        imageSize: size as any
+        aspectRatio: aspectRatio,
+        imageSize: imageSize
       }
     }
   });
 
-   for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+  const parts = response.candidates?.[0]?.content?.parts;
+  if (parts) {
+    for (const part of parts) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
     }
   }
-  throw new Error("No image generated");
+  return null;
 };
