@@ -1,3 +1,4 @@
+
 export interface DetailedDiagnosis {
   faceArchitecture: {
     shape: string;
@@ -85,3 +86,36 @@ export enum BudgetOption {
 
 export type AspectRatio = "1:1" | "3:4" | "4:3" | "9:16" | "16:9";
 export type ImageSize = "1K" | "2K" | "4K";
+
+// --- GLOWUP HUB TYPES ---
+export type Gender = 'Men' | 'Women';
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  summary: string;
+  full_markdown_content: string; // Using markdown for rich text
+  image_generation_prompt: string;
+  generated_image_url?: string; // Populated after image gen
+  category: string;
+  readTime: string;
+}
+
+export interface GenderContent {
+  tip: {
+    title: string;
+    content: string;
+  };
+  blog: BlogPost;
+}
+
+export interface DailyFeed {
+  date: string; // "YYYY-MM-DD"
+  men: GenderContent;
+  women: GenderContent;
+  generatedAt: number; // Timestamp
+}
+
+export interface ContentDB {
+  [date: string]: DailyFeed;
+}

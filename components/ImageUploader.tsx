@@ -170,18 +170,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
   };
 
   return (
-    <div className={`w-full bg-white rounded-2xl shadow-xl border border-slate-100 ${compact ? 'p-6' : 'max-w-4xl mx-auto p-8'}`}>
+    <div className={`w-full bg-white rounded-2xl border border-gray-200 ${compact ? 'p-6' : 'max-w-4xl mx-auto p-8'}`}>
       {!compact && (
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-slate-800 mb-2">Upload Your Photos</h2>
-          <p className="text-slate-500">Ensure good lighting, no filters, and no glasses for best results.</p>
+          <h2 className="text-2xl font-semibold text-black mb-2">Upload Your Photos</h2>
+          <p className="text-gray-500">Ensure good lighting, no filters, and no glasses for best results.</p>
         </div>
       )}
 
       {compact && (
          <div className="mb-6 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800">Start Diagnosis</h3>
-            <span className="text-xs bg-medical-50 text-medical-600 px-2 py-1 rounded font-medium">3-Step Process</span>
+            <h3 className="font-bold text-black">Start Diagnosis</h3>
+            <span className="text-xs bg-black text-white px-2 py-1 rounded font-medium">3-Step Process</span>
          </div>
       )}
 
@@ -202,7 +202,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
 
            return (
             <div key={type} className="flex flex-col items-center group">
-              <label className={`block text-xs font-bold mb-2 uppercase tracking-wide transition-colors ${hasError ? 'text-red-500' : 'text-slate-500'}`}>
+              <label className={`block text-xs font-bold mb-2 uppercase tracking-wide transition-colors ${hasError ? 'text-red-500' : 'text-gray-500'}`}>
                 {config.label} {hasError && '*'}
               </label>
               
@@ -210,17 +210,17 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
                 onClick={() => !hasImage && !isValidating && openSelectionModal(type)}
                 className={`relative w-full aspect-[3/4] rounded-xl overflow-hidden transition-all duration-200 ${
                   hasImage 
-                    ? 'border-2 border-solid border-medical-500 shadow-md' 
+                    ? 'border border-solid border-black' 
                     : hasError 
-                      ? 'border-2 border-dashed border-red-300 bg-red-50 cursor-pointer' 
-                      : 'border-2 border-dashed border-slate-300 bg-slate-50 hover:border-medical-400 hover:bg-slate-100 cursor-pointer'
+                      ? 'border border-dashed border-red-300 bg-red-50 cursor-pointer' 
+                      : 'border border-dashed border-gray-300 bg-gray-50 hover:border-black hover:bg-white cursor-pointer'
                 }`}
               >
                 {/* LOADING SPINNER */}
                 {isValidating && (
                    <div className="absolute inset-0 z-20 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
-                      <div className="w-8 h-8 border-4 border-medical-200 border-t-medical-600 rounded-full animate-spin mb-2"></div>
-                      <span className="text-xs font-bold text-medical-600">Validating...</span>
+                      <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-2"></div>
+                      <span className="text-xs font-bold text-black">Validating...</span>
                    </div>
                 )}
 
@@ -230,17 +230,17 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
                     {/* Trash/Remove Button */}
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleRemove(type); }}
-                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white opacity-90 hover:opacity-100 hover:scale-110 transition-all shadow-sm z-10"
+                      className="absolute top-2 right-2 w-6 h-6 bg-black rounded-full flex items-center justify-center text-white opacity-90 hover:opacity-100 hover:scale-110 transition-all shadow-sm z-10"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                     {/* Checkmark Badge */}
-                     <div className="absolute bottom-2 right-2 w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center text-white shadow-sm">
+                     <div className="absolute bottom-2 right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center text-white shadow-sm">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
                   </>
                 ) : (
-                  <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center ${hasError ? 'text-red-400' : 'text-slate-400 group-hover:text-medical-500'}`}>
+                  <div className={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center ${hasError ? 'text-red-400' : 'text-gray-400 group-hover:text-black'}`}>
                     <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={config.iconPath} />
                     </svg>
@@ -258,10 +258,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
       <button
         onClick={handleAnalyze}
         disabled={!images.front || !images.left || !images.right || Object.values(validating).some(v => v)}
-        className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${
+        className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${
           (!images.front || !images.left || !images.right || Object.values(validating).some(v => v))
-          ? 'bg-slate-300 cursor-not-allowed shadow-none' 
-          : 'bg-medical-600 hover:bg-medical-500 shadow-medical-500/30'
+          ? 'bg-gray-300 cursor-not-allowed' 
+          : 'bg-black hover:bg-gray-900 shadow-lg shadow-black/10'
         }`}
       >
         Generate My Analysis
@@ -269,14 +269,79 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
       </button>
 
       {/* PRIVACY DISCLAIMER */}
-      <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-start gap-3">
-        <svg className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 flex items-start gap-3">
+        <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          <span className="font-bold text-slate-700">100% Privacy Focused:</span> Your photos are processed in real-time and strictly used for analysis. They are automatically deleted from our servers immediately after the report is generated. We do not store or share your personal images.
+        <p className="text-xs text-gray-500 leading-relaxed">
+          <span className="font-bold text-gray-700">100% Privacy Focused:</span> Your photos are processed in real-time and strictly used for analysis. They are automatically deleted from our servers immediately after the report is generated. We do not store or share your personal images.
         </p>
       </div>
+
+      {/* GUIDE: How to take your picture */}
+      {!compact && (
+        <div className="mt-8 border-t border-gray-200 pt-8">
+          <h3 className="text-lg font-bold text-black mb-6 text-center">How to take your picture for better skin analysis?</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Example 1: Good Lighting */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-20 h-20 bg-white rounded-full mb-3 flex items-center justify-center border border-gray-200 group-hover:border-black transition-colors shadow-sm">
+                <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-black mb-1">Good Lighting</p>
+              <p className="text-xs text-gray-500 px-4">Face a natural light source. Avoid harsh shadows.</p>
+            </div>
+
+            {/* Example 2: No Makeup */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-20 h-20 bg-white rounded-full mb-3 flex items-center justify-center border border-gray-200 group-hover:border-black transition-colors shadow-sm">
+                 <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-black mb-1">No Makeup</p>
+              <p className="text-xs text-gray-500 px-4">Clean face ensures accurate texture analysis.</p>
+            </div>
+
+            {/* Example 3: Neutral Expression */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-20 h-20 bg-white rounded-full mb-3 flex items-center justify-center border border-gray-200 group-hover:border-black transition-colors shadow-sm">
+                <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-black mb-1">Neutral Expression</p>
+              <p className="text-xs text-gray-500 px-4">Keep face relaxed. No smiling or frowning.</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+             <div className="flex flex-wrap justify-center gap-8">
+                {/* Placeholder for "Do" example image */}
+                <div className="text-center group">
+                   <div className="w-32 h-40 bg-white rounded-lg mb-3 flex items-center justify-center border-2 border-dashed border-gray-300 group-hover:border-black transition-colors relative overflow-hidden">
+                      <svg className="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <div className="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded">DO</div>
+                   </div>
+                   <p className="text-xs font-bold text-black">Clear & Sharp</p>
+                </div>
+                
+                {/* Placeholder for "Don't" example image */}
+                <div className="text-center group">
+                   <div className="w-32 h-40 bg-gray-100 rounded-lg mb-3 flex items-center justify-center border-2 border-dashed border-gray-300 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-black/5"></div>
+                      <svg className="w-12 h-12 text-gray-300 blur-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <div className="absolute top-2 right-2 bg-gray-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">DON'T</div>
+                   </div>
+                   <p className="text-xs font-bold text-gray-400">Blurry or Dark</p>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden File Input for Gallery Fallback */}
       <input
@@ -295,33 +360,33 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImagesSelected, compact
             {/* Close Button */}
             <button 
               onClick={closeModal}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10 p-2 bg-white/50 rounded-full"
+              className="absolute top-4 right-4 text-gray-400 hover:text-black z-10 p-2 bg-white/50 rounded-full"
             >
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
             {modalMode === 'selection' ? (
               <div className="p-8 text-center">
-                 <h3 className="text-xl font-bold text-slate-800 mb-6">Choose Image Source</h3>
+                 <h3 className="text-xl font-bold text-black mb-6">Choose Image Source</h3>
                  <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={startCamera}
-                      className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:border-medical-500 hover:bg-medical-50 transition-all group"
+                      className="flex flex-col items-center justify-center p-6 bg-gray-50 border border-gray-200 rounded-2xl hover:border-black hover:bg-white transition-all group"
                     >
-                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-medical-600 group-hover:scale-110 transition-transform">
+                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-black group-hover:scale-110 transition-transform">
                           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                        </div>
-                       <span className="font-bold text-slate-700">Take Photo</span>
+                       <span className="font-bold text-gray-700">Take Photo</span>
                     </button>
                     
                     <button 
                       onClick={triggerGalleryUpload}
-                      className="flex flex-col items-center justify-center p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition-all group"
+                      className="flex flex-col items-center justify-center p-6 bg-gray-50 border border-gray-200 rounded-2xl hover:border-black hover:bg-white transition-all group"
                     >
-                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-teal-600 group-hover:scale-110 transition-transform">
+                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-black group-hover:scale-110 transition-transform">
                           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                        </div>
-                       <span className="font-bold text-slate-700">Upload</span>
+                       <span className="font-bold text-gray-700">Upload</span>
                     </button>
                  </div>
               </div>

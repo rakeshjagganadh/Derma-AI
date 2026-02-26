@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { DetailedDiagnosis, RoutineResult, BudgetOption, AspectRatio, ImageSize } from "../types";
+import { DetailedDiagnosis, RoutineResult, BudgetOption, AspectRatio, ImageSize, GenderContent, Gender } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -80,7 +81,6 @@ export const validateImage = async (file: File, expectedView: 'front' | 'side'):
     return JSON.parse(response.text) as ValidationResult;
   } catch (error) {
     console.error("Validation Error", error);
-    // Fallback: Allow upload if API fails, but log it
     return { isValid: true, detectedAngle: expectedView, message: 'Validation bypassed due to network' };
   }
 };
@@ -132,7 +132,7 @@ const diagnosisSchema: Schema = {
             items: {
               type: Type.OBJECT,
               properties: {
-                commonName: { type: Type.STRING, description: "Common name e.g., Pimples" },
+                commonName: { type: Type.STRING, description: "Use specific names: 'Micro-Comedones', 'Sebum Plugs', 'Fungal Acne', 'Sun Spots'." },
                 medicalTerm: { type: Type.STRING, description: "Medical term e.g., Acne Vulgaris" },
                 category: { type: Type.STRING, enum: ['Inflammation', 'Dryness', 'Pigmentation', 'Texture', 'Aging'] },
                 severity: { type: Type.STRING, enum: ['Mild', 'Moderate', 'Severe'] },
@@ -145,7 +145,7 @@ const diagnosisSchema: Schema = {
                     type: Type.OBJECT,
                     properties: {
                       view: { type: Type.STRING, enum: ['Front', 'Left', 'Right'] },
-                      box: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "[ymin, xmin, ymax, xmax] 0-1000" }
+                      box: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "[ymin, xmin, ymax, xmax] 0-1000. For Pores/Texture, break large areas into multiple smaller cluster boxes." }
                     },
                     required: ["view", "box"]
                   }
@@ -173,12 +173,18 @@ export const analyzeSkin = async (
   const rightPart = await fileToGenerativePart(rightProfile);
 
   const prompt = `
-    Act as a Senior Clinical Dermatologist. Conduct a rigorous medical analysis of these 3 images.
+    Act as a Senior Clinical Dermatologist. Conduct a rigorous, EXHAUSTIVE medical analysis of these 3 images.
     
-    INPUTS:
-    Image 1: Front Face
-    Image 2: Left Profile
-    Image 3: Right Profile
+    MODE: "Micro-Feature Scanner"
+    Do not just detect major acne. You must scan for and list coordinates for micro-features across all 3 angles (Front, Left, Right).
+
+    DETECTION TARGETS (Be extremely specific):
+    - micro_comedones: Tiny skin-colored bumps/whiteheads (often on forehead/chin).
+    - enlarged_pores: Visible pore structures in T-zone. Break these into multiple small "cluster" boxes rather than one big box.
+    - pigment_points: Small freckles, post-acne marks (PIH), or sun spots.
+    - sebum_plugs: Blackheads on nose/chin.
+    - texture_roughness: Dry/flaky patches (often around mouth or cheeks).
+    - inflammation: Active red papules or pustules.
 
     PROTOCOL (The 3-Image Cross-Reference):
     - You are analyzing three angles of the same person. 
@@ -186,23 +192,10 @@ export const analyzeSkin = async (
     - Do not ignore side-profile exclusive issues (e.g., hormonal acne on jawline, sun spots on cheeks).
     - In your text analysis (Root Cause), explicitly mention the location context.
 
-    FACE MAPPING LOGIC (Use this for 'lifestyle_triggers'):
-    - Right Cheek Acne -> Trigger: "Dirty Pillowcase or Phone Screen bacteria".
-    - Jawline Acne -> Trigger: "Hormonal fluctuations or Stress".
-    - Forehead Bumps -> Trigger: "Dandruff, Hair Products (Pomade Acne) or Digestion".
-    - Around Mouth -> Trigger: "Fluoride Toothpaste residue or Lip Balm clogging".
-    - Nose Blackheads -> Trigger: "Excess Oil Production".
-
-    TONE CHECK: 
-    - Use Plain English. 
-    - BAD: "Hyperkeratinization observed."
-    - GOOD: "Dead skin cells are blocking your pores."
-    - BAD: "Erythema detected."
-    - GOOD: "Visible redness and inflammation."
-
     OUTPUT:
     - Output STRICT JSON matching the schema.
-    - For 'locations', you MUST generate bounding boxes for the specific view where the issue is visible. 
+    - For 'locations', do not just draw one huge box for the forehead. Draw specific boxes around CLUSTERS of issues. 
+    - High Fidelity: We want to feel like every square millimeter was scanned.
   `;
 
   const response = await ai.models.generateContent({
@@ -219,7 +212,7 @@ export const analyzeSkin = async (
       responseMimeType: 'application/json',
       responseSchema: diagnosisSchema,
       temperature: 0.1,
-      thinkingConfig: { thinkingBudget: 2048 }
+      thinkingConfig: { thinkingBudget: 4096 }
     }
   });
 
@@ -305,6 +298,61 @@ export const getRoutineRecommendation = async (
   return JSON.parse(text) as RoutineResult;
 };
 
+// --- GLOWUP HUB: CREATIVE ENGINE ---
+
+const genderContentSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    tip: {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        content: { type: Type.STRING, description: "A 1-sentence punchy tip." }
+      },
+      required: ["title", "content"]
+    },
+    blog: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING },
+          title: { type: Type.STRING, description: "Viral style headline" },
+          summary: { type: Type.STRING },
+          full_markdown_content: { type: Type.STRING, description: "300 words. Use H2, bullet points, and bold text." },
+          image_generation_prompt: { type: Type.STRING, description: "A cinematic, photorealistic AI image prompt to represent this article." },
+          category: { type: Type.STRING },
+          readTime: { type: Type.STRING }
+        },
+        required: ["id", "title", "summary", "full_markdown_content", "image_generation_prompt", "category", "readTime"]
+    }
+  },
+  required: ["tip", "blog"]
+};
+
+export const generateGlowUpContent = async (gender: Gender): Promise<GenderContent> => {
+  const prompt = `
+    Generate the "Daily GlowUp" content for: ${gender}.
+    
+    1. Tip of the Day: One short, seasonal skincare or grooming tip.
+    2. Blog Post: Generate 1 Viral-Style mini blog post about Skincare, Hair, or Fashion/Grooming for ${gender}.
+    
+    For the blog, write the Full Content (approx 300 words) in Markdown.
+    Crucially, write a detailed 'image_generation_prompt' that describes a high-end, photorealistic 8k image to go with it.
+  `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: genderContentSchema,
+      temperature: 0.7
+    }
+  });
+
+  if (!response.text) throw new Error("Failed to generate content");
+  return JSON.parse(response.text) as GenderContent;
+};
+
 // --- TOOLS: IMAGE EDITING ---
 
 export const editImage = async (file: File, prompt: string): Promise<string | null> => {
@@ -320,7 +368,6 @@ export const editImage = async (file: File, prompt: string): Promise<string | nu
     }
   });
 
-  // Extract result image
   const parts = response.candidates?.[0]?.content?.parts;
   if (parts) {
     for (const part of parts) {
@@ -336,18 +383,26 @@ export const editImage = async (file: File, prompt: string): Promise<string | nu
 
 export const generateImage = async (prompt: string, aspectRatio: AspectRatio, imageSize: ImageSize): Promise<string | null> => {
   // Use Pro for high res, Flash for standard
-  const model = (imageSize === '2K' || imageSize === '4K') ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
+  const isHighRes = (imageSize === '2K' || imageSize === '4K');
+  const model = isHighRes ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
   
+  // Flash image model does not support imageSize parameter (it defaults to 1K)
+  // We only add imageSize if we are using the Pro model.
+  const imageConfig: any = {
+    aspectRatio: aspectRatio,
+  };
+
+  if (isHighRes) {
+    imageConfig.imageSize = imageSize;
+  }
+
   const response = await ai.models.generateContent({
     model: model,
     contents: {
       parts: [{ text: prompt }]
     },
     config: {
-      imageConfig: {
-        aspectRatio: aspectRatio,
-        imageSize: imageSize
-      }
+      imageConfig: imageConfig
     }
   });
 
