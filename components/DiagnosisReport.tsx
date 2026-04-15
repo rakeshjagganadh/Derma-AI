@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DetailedDiagnosis, IssueDetail } from '../types';
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -126,6 +127,7 @@ const StaticAnalysisImage: React.FC<{
 };
 
 const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, onProceed }) => {
+  const navigate = useNavigate();
   const reportRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -475,6 +477,23 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
             >
               Generate Budget-Optimized Routine <span className="">→</span>
             </button>
+
+            {/* Cross-Marketing Banner */}
+            <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider mb-2">
+                  Beta 🧪
+                </div>
+                <h4 className="text-xl font-bold text-slate-900 mb-1">Curious about your hair health?</h4>
+                <p className="text-sm text-slate-600">Try our new AI Hair & Scalp Analysis tool to discover your true hair type and scalp condition.</p>
+              </div>
+              <button 
+                onClick={() => navigate('/scan/hair')}
+                className="shrink-0 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Scan Hair Now
+              </button>
+            </div>
         </div>
       </div>
 

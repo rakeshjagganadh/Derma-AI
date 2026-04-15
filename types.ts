@@ -12,6 +12,21 @@ export interface DetailedDiagnosis {
   summary: string;
 }
 
+export interface HairDiagnosis {
+  hair_type: string;
+  density_score: string;
+  scalp_condition: string;
+  primary_issues: string[];
+  root_causes: string[];
+  routine_steps: string[];
+  bounding_boxes: {
+    view: 'Front' | 'Top' | 'Back' | 'Scalp';
+    box: number[]; // [ymin, xmin, ymax, xmax] 0-1000
+    label: string;
+    color: string;
+  }[];
+}
+
 export interface LifestyleTrigger {
   issue: string; // e.g. "Right Cheek Acne"
   trigger: string; // e.g. "Dirty Pillowcase"

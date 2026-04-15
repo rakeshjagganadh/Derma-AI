@@ -1,17 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import ImageUploader from './components/ImageUploader';
 import DiagnosisReport from './components/DiagnosisReport';
 import ProductRecommender from './components/ProductRecommender';
 import GlowUpHub from './components/GlowUpHub';
-import { analyzeSkin, getRoutineRecommendation } from './services/geminiService';
-import { DetailedDiagnosis, RoutineResult, AppStep, BudgetOption } from './types';
+import HairUploader from './components/HairUploader';
+import HairReport from './components/HairReport';
+import { analyzeSkin, getRoutineRecommendation, analyzeHair } from './services/geminiService';
+import { DetailedDiagnosis, RoutineResult, AppStep, BudgetOption, HairDiagnosis } from './types';
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [step, setStep] = useState<AppStep>(AppStep.UPLOAD);
   const [images, setImages] = useState<{ front?: File; left?: File; right?: File }>({});
   const [diagnosis, setDiagnosis] = useState<DetailedDiagnosis | null>(null);
   const [routine, setRoutine] = useState<RoutineResult | null>(null);
+  
+  const [hairImages, setHairImages] = useState<{ front?: File; top?: File; back?: File; scalp?: File }>({});
+  const [hairDiagnosis, setHairDiagnosis] = useState<HairDiagnosis | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,12 +40,31 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // If user uploads from hero, scroll to top for analysis view
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
       const result = await analyzeSkin(files.front, files.left, files.right);
       setDiagnosis(result);
+      setStep(AppStep.REPORT);
+    } catch (err: any) {
+      setError(err.message || 'Analysis failed. Please try again.');
+      setStep(AppStep.UPLOAD);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHairImagesSelected = async (files: { front: File; top: File; back: File; scalp: File }) => {
+    setHairImages(files);
+    setStep(AppStep.ANALYZING);
+    setLoading(true);
+    setError(null);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    try {
+      const result = await analyzeHair(files.front, files.top, files.back, files.scalp);
+      setHairDiagnosis(result);
       setStep(AppStep.REPORT);
     } catch (err: any) {
       setError(err.message || 'Analysis failed. Please try again.');
@@ -68,8 +97,19 @@ const App: React.FC = () => {
     setImages({});
     setDiagnosis(null);
     setRoutine(null);
+    setHairImages({});
+    setHairDiagnosis(null);
     setError(null);
+    navigate('/');
   };
+
+  // Reset state when navigating to uploaders
+  useEffect(() => {
+    if (location.pathname === '/scan/skin' || location.pathname === '/scan/hair') {
+      setStep(AppStep.UPLOAD);
+      setError(null);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-white text-black font-sans">
@@ -83,15 +123,15 @@ const App: React.FC = () => {
           
           <nav className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-6 mr-4">
-                <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-gray-500 hover:text-black transition-colors">How it Works</button>
-                <button onClick={() => scrollToSection('sample-report')} className="text-sm font-medium text-gray-500 hover:text-black transition-colors">Sample Report</button>
+                <button onClick={() => { navigate('/'); setTimeout(() => scrollToSection('how-it-works'), 100); }} className="text-sm font-medium text-gray-500 hover:text-black transition-colors">How it Works</button>
+                <button onClick={() => { navigate('/'); setTimeout(() => scrollToSection('sample-report'), 100); }} className="text-sm font-medium text-gray-500 hover:text-black transition-colors">Sample Report</button>
             </div>
             
             <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
 
             <div className="flex bg-gray-100 p-1 rounded-full">
                 <button 
-                  onClick={() => setView('diagnosis')} 
+                  onClick={() => { setView('diagnosis'); navigate('/'); }} 
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${view === 'diagnosis' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
                 >
                   Diagnosis
@@ -120,11 +160,9 @@ const App: React.FC = () => {
         {view === 'glowup' ? (
           <GlowUpHub />
         ) : (
-          <>
-            {step === AppStep.UPLOAD ? (
-              // LANDING PAGE LAYOUT
+          <Routes>
+            <Route path="/" element={
               <div className="animate-fade-in">
-                
                 {/* HERO SECTION */}
                 <section className="relative pt-12 pb-20 lg:pt-24 lg:pb-32 overflow-hidden">
                     <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-16 items-center">
@@ -132,35 +170,46 @@ const App: React.FC = () => {
                         <div className="max-w-2xl relative z-10">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-black text-xs font-bold uppercase tracking-wider mb-6 border border-gray-200">
                                 <span className="w-2 h-2 rounded-full bg-black"></span>
-                                AI-Powered Dermatology
+                                AI-Powered Dermatology & Trichology
                             </div>
                             <h1 className="text-5xl lg:text-7xl font-bold text-black leading-[1.1] mb-6 tracking-tight">
                                 Your Personal <br/>
-                                <span className="text-black decoration-4 decoration-gray-300 underline underline-offset-4">AI Dermatologist.</span>
+                                <span className="text-black decoration-4 decoration-gray-300 underline underline-offset-4">AI Clinic.</span>
                             </h1>
                             <p className="text-lg text-gray-600 mb-8 leading-relaxed max-w-lg">
-                                Get a medical-grade analysis of your Face in 10 seconds. 
+                                Get a medical-grade analysis of your Skin and Hair in seconds. 
                                 <span className="font-semibold text-black"> 100% Private.</span>
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-6 mb-10">
-                                <div className="flex items-center gap-2 text-sm text-black font-semibold bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-                                    <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center text-white">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                                    </div>
-                                    Trained on 50k+ Clinical Images
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-black font-semibold bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-                                    <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center text-white">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                                    </div>
-                                    Dermatologist Approved Logic
-                                </div>
-                            </div>
                         </div>
 
-                        {/* Right Action (Upload Card) */}
-                        <div className="relative z-10">
-                            <ImageUploader onImagesSelected={handleImagesSelected} compact={true} />
+                        {/* Right Action (Two Cards) */}
+                        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Card 1: Skin Analysis */}
+                            <button 
+                              onClick={() => navigate('/scan/skin')}
+                              className="bg-white p-6 rounded-2xl border border-gray-200 hover:border-black hover:shadow-lg transition-all text-left flex flex-col group"
+                            >
+                               <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black mb-4 group-hover:bg-black group-hover:text-white transition-colors">
+                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                               </div>
+                               <h3 className="font-bold text-black text-xl mb-2">Skin Analysis</h3>
+                               <p className="text-sm text-gray-500">Clinical grade skin mapping</p>
+                            </button>
+
+                            {/* Card 2: Hair & Scalp Analysis */}
+                            <button 
+                              onClick={() => navigate('/scan/hair')}
+                              className="bg-white p-6 rounded-2xl border border-gray-200 hover:border-black hover:shadow-lg transition-all text-left flex flex-col group relative"
+                            >
+                               <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                  Beta 🧪
+                               </div>
+                               <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-black mb-4 group-hover:bg-black group-hover:text-white transition-colors">
+                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                               </div>
+                               <h3 className="font-bold text-black text-xl mb-2">Hair & Scalp Analysis</h3>
+                               <p className="text-sm text-gray-500">Deep-dive follicle & texture scan</p>
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -169,8 +218,8 @@ const App: React.FC = () => {
                 <section id="how-it-works" className="py-24 bg-white border-t border-gray-100">
                    <div className="container mx-auto px-4">
                       <div className="text-center max-w-2xl mx-auto mb-16">
-                         <h2 className="text-3xl font-bold text-black mb-4">Precision Skin Analysis</h2>
-                         <p className="text-lg text-gray-500">Our multi-model AI scans 4 distinct dimensions of skin health to provide a holistic diagnosis.</p>
+                         <h2 className="text-3xl font-bold text-black mb-4">Precision Analysis</h2>
+                         <p className="text-lg text-gray-500">Our multi-model AI scans distinct dimensions of skin and hair health to provide a holistic diagnosis.</p>
                       </div>
                       
                       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -181,10 +230,10 @@ const App: React.FC = () => {
                             { title: "Acne Mapping", desc: "Identifies inflammatory vs. fungal acne types.", icon: (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             )},
-                            { title: "Pigmentation", desc: "Scans for PIH, sun spots, and melasma.", icon: (
+                            { title: "Scalp Health", desc: "Detects flakes, redness, and dryness.", icon: (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             )},
-                            { title: "Biological Age", desc: "Estimates skin age based on elasticity and wrinkles.", icon: (
+                            { title: "Hair Texture", desc: "Analyzes curl pattern and strand health.", icon: (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             )}
                          ].map((feature, idx) => (
@@ -202,72 +251,6 @@ const App: React.FC = () => {
                    </div>
                 </section>
 
-                {/* SAMPLE REPORT SECTION */}
-                <section id="sample-report" className="py-24 bg-gray-50 border-t border-gray-200 overflow-hidden">
-                   <div className="container mx-auto px-4 flex flex-col lg:flex-row items-center gap-16">
-                      <div className="flex-1 order-2 lg:order-1 relative">
-                         {/* Abstract background shapes */}
-                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-white/50 rounded-full blur-3xl -z-10"></div>
-                         
-                         {/* Visual Representation of Report */}
-                         <div className="relative mx-auto max-w-sm" style={{ perspective: '1000px' }}>
-                            <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 transform rotate-y-12 rotate-x-6 hover:rotate-0 transition-transform duration-700 ease-out">
-                               {/* Mock Header */}
-                               <div className="flex justify-between items-center mb-6">
-                                  <div>
-                                     <div className="w-24 h-4 bg-black rounded mb-2"></div>
-                                     <div className="w-16 h-3 bg-gray-300 rounded"></div>
-                                  </div>
-                                  <div className="w-10 h-10 bg-black rounded-full opacity-10"></div>
-                               </div>
-                               
-                               {/* Mock Face */}
-                               <div className="relative aspect-[3/4] bg-gray-100 rounded-2xl mb-6 overflow-hidden border border-gray-100">
-                                   <div className="absolute inset-0 flex items-center justify-center text-gray-300">
-                                      <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" opacity="0.3"/></svg>
-                                   </div>
-                                   {/* Floating Bounding Boxes */}
-                                   <div className="absolute top-[30%] left-[20%] w-16 h-16 border-2 border-black rounded-lg flex items-start">
-                                      <span className="bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded ml-[-10px] mt-[-10px]">Acne</span>
-                                   </div>
-                                   <div className="absolute bottom-[30%] right-[25%] w-12 h-10 border-2 border-gray-400 rounded-lg flex items-end justify-end">
-                                      <span className="bg-gray-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mr-[-10px] mb-[-10px]">Pores</span>
-                                   </div>
-                               </div>
-
-                               {/* Mock Stats */}
-                               <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                     <div className="w-1/3 h-3 bg-gray-200 rounded"></div>
-                                     <div className="w-8 h-3 bg-gray-300 rounded"></div>
-                                  </div>
-                                  <div className="flex items-center justify-between">
-                                     <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
-                                     <div className="w-8 h-3 bg-gray-400 rounded"></div>
-                                  </div>
-                               </div>
-                            </div>
-                         </div>
-                      </div>
-                      
-                      <div className="flex-1 order-1 lg:order-2">
-                         <div className="inline-block text-black font-bold tracking-wider uppercase text-sm mb-4">Under The Surface</div>
-                         <h2 className="text-4xl font-bold text-black mb-6">See exactly what your skin is trying to tell you.</h2>
-                         <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                            Our advanced computer vision engine draws precise bounding boxes around every concern, giving you a visual map of your skin's health. 
-                            Understand exactly where your issues are concentrated (left cheek vs. right jawline) to identify root causes like phone bacteria or pillowcase friction.
-                         </p>
-                         <button 
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-                            className="bg-black text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-800 transition-all shadow-xl shadow-black/20 flex items-center gap-2 group"
-                         >
-                            Start Free Analysis 
-                            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                         </button>
-                      </div>
-                   </div>
-                </section>
-                
                 {/* Global Footer */}
                 <footer className="bg-black text-white py-16 border-t border-gray-800">
                     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
@@ -301,9 +284,15 @@ const App: React.FC = () => {
                     </div>
                 </footer>
               </div>
-            ) : (
-              // APP PROCESS LAYOUT
+            } />
+
+            <Route path="/scan/skin" element={
               <div className="max-w-7xl mx-auto px-4 py-8">
+                {step === AppStep.UPLOAD && (
+                  <div className="animate-fade-in">
+                    <ImageUploader onImagesSelected={handleImagesSelected} />
+                  </div>
+                )}
                 {step === AppStep.ANALYZING && (
                   <div className="flex flex-col items-center justify-center py-32 animate-fade-in">
                     <div className="relative">
@@ -315,7 +304,6 @@ const App: React.FC = () => {
                     <p className="mt-2 text-gray-500 text-lg">Cross-referencing 3 angles with dermatological data...</p>
                   </div>
                 )}
-
                 {step === AppStep.REPORT && diagnosis && images.front && images.left && images.right && (
                   <DiagnosisReport 
                     diagnosis={diagnosis} 
@@ -323,7 +311,6 @@ const App: React.FC = () => {
                     onProceed={handleGetRoutine} 
                   />
                 )}
-
                 {(step === AppStep.BUDGET || step === AppStep.ROUTINE) && (
                   <ProductRecommender 
                     onBudgetSelect={handleBudgetSelect} 
@@ -333,8 +320,35 @@ const App: React.FC = () => {
                   />
                 )}
               </div>
-            )}
-          </>
+            } />
+
+            <Route path="/scan/hair" element={
+              <div className="max-w-7xl mx-auto px-4 py-8">
+                {step === AppStep.UPLOAD && (
+                  <div className="animate-fade-in">
+                    <HairUploader onImagesSelected={handleHairImagesSelected} />
+                  </div>
+                )}
+                {step === AppStep.ANALYZING && (
+                  <div className="flex flex-col items-center justify-center py-32 animate-fade-in">
+                    <div className="relative">
+                      <div className="w-24 h-24 border-4 border-gray-200 rounded-full"></div>
+                      <div className="absolute top-0 left-0 w-24 h-24 border-4 border-black rounded-full border-t-transparent animate-spin"></div>
+                      <div className="absolute inset-0 flex items-center justify-center text-black font-bold text-xl">AI</div>
+                    </div>
+                    <h2 className="mt-8 text-3xl font-bold text-black">Analyzing Your Hair Profile</h2>
+                    <p className="mt-2 text-gray-500 text-lg">Cross-referencing 4 angles with trichological data...</p>
+                  </div>
+                )}
+                {step === AppStep.REPORT && hairDiagnosis && hairImages.front && hairImages.top && hairImages.back && hairImages.scalp && (
+                  <HairReport 
+                    diagnosis={hairDiagnosis} 
+                    images={{ front: hairImages.front, top: hairImages.top, back: hairImages.back, scalp: hairImages.scalp }} 
+                  />
+                )}
+              </div>
+            } />
+          </Routes>
         )}
       </main>
     </div>

@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { DetailedDiagnosis, RoutineResult, BudgetOption, AspectRatio, ImageSize, GenderContent, Gender } from "../types";
+import { DetailedDiagnosis, RoutineResult, BudgetOption, AspectRatio, ImageSize, GenderContent, Gender, HairDiagnosis } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -199,7 +199,7 @@ export const analyzeSkin = async (
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-3.1-pro-preview',
     contents: {
       parts: [
         frontPart,
@@ -218,6 +218,86 @@ export const analyzeSkin = async (
 
   if (!response.text) throw new Error("No analysis returned");
   return JSON.parse(response.text) as DetailedDiagnosis;
+};
+
+const hairDiagnosisSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    hair_type: { type: Type.STRING, description: "Curl pattern (Type 1A to 4C) and Male Pattern Baldness scale (e.g., Norwood 2, Temple Recession) if applicable." },
+    density_score: { type: Type.STRING, description: "Density assessment (e.g., High, Medium, Low, Thinning at crown)." },
+    scalp_condition: { type: Type.STRING, description: "Scalp Health: Detect flakes, redness, or extreme dryness." },
+    primary_issues: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Strand Health: Look for signs of 'Protein Overload' (stiff, straw-like), 'Moisture Deficit' (frizz, puffiness), heat damage, etc." },
+    root_causes: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Explain why (e.g., 'Using harsh sulfates on curly hair causes frizz', 'Heat from blowdryers is boiling the moisture out')." },
+    routine_steps: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Recommend a routine (e.g., Hydration masks, Redensyl for hairlines, Silicones for heat protection)." },
+    bounding_boxes: {
+      type: Type.ARRAY,
+      description: "Draw bounding boxes on the user's images (e.g., Red box over receding temples, Blue box over frizzy ends, Yellow box over scalp flakes).",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          view: { type: Type.STRING, enum: ['Front', 'Top', 'Back', 'Scalp'] },
+          box: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "[ymin, xmin, ymax, xmax] 0-1000" },
+          label: { type: Type.STRING, description: "Label for the box (e.g., 'Frizzy Ends', 'Scalp Flakes')" },
+          color: { type: Type.STRING, description: "Color for the box (e.g., 'red', 'blue', 'yellow')" }
+        },
+        required: ["view", "box", "label", "color"]
+      }
+    }
+  },
+  required: ["hair_type", "density_score", "scalp_condition", "primary_issues", "root_causes", "routine_steps", "bounding_boxes"]
+};
+
+export const analyzeHair = async (
+  frontHairline: File,
+  topCrown: File,
+  backLength: File,
+  scalpCloseUp: File
+): Promise<HairDiagnosis> => {
+  const frontPart = await fileToGenerativePart(frontHairline);
+  const topPart = await fileToGenerativePart(topCrown);
+  const backPart = await fileToGenerativePart(backLength);
+  const scalpPart = await fileToGenerativePart(scalpCloseUp);
+
+  const prompt = `
+    Act as a Senior Trichologist and Hair Expert. Conduct a rigorous, EXHAUSTIVE medical analysis of these 4 images.
+    
+    Images provided:
+    1. Front Hairline
+    2. Top Crown
+    3. Back/Length
+    4. Scalp Close-up
+
+    DETECTION TARGETS (Be extremely specific):
+    - Hair Type (Norwood/Texture): Identify curl pattern (Type 1A to 4C) and Male Pattern Baldness scale (if applicable, e.g., Temple Recession).
+    - Scalp Health: Detect flakes, redness, or extreme dryness.
+    - Strand Health: Look for signs of "Protein Overload" (stiff, straw-like hair), "Moisture Deficit" (frizz, puffiness), and heat damage.
+
+    OUTPUT:
+    - Output STRICT JSON matching the schema.
+    - Draw bounding boxes on the user's images (e.g., Red box over receding temples, Blue box over frizzy ends, Yellow box over scalp flakes).
+  `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3.1-pro-preview',
+    contents: {
+      parts: [
+        frontPart,
+        topPart,
+        backPart,
+        scalpPart,
+        { text: prompt }
+      ]
+    },
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: hairDiagnosisSchema,
+      temperature: 0.1,
+      thinkingConfig: { thinkingBudget: 4096 }
+    }
+  });
+
+  if (!response.text) throw new Error("No analysis returned");
+  return JSON.parse(response.text) as HairDiagnosis;
 };
 
 export const getRoutineRecommendation = async (
