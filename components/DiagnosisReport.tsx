@@ -248,48 +248,48 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 animate-fade-in" ref={reportRef}>
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8 animate-fade-in" ref={reportRef}>
       
       {/* Header */}
-      <div className="mb-8 border-b border-black pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="mb-6 sm:mb-8 border-b border-black pb-4 sm:pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-black font-mono tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black font-mono tracking-tight">
             {isGoodSkin ? "SKIN HEALTH CELEBRATION" : "CLINICAL SKIN PROFILE"}
           </h1>
-          <p className="text-gray-500 text-sm mt-1 font-mono">
+          <p className="text-gray-500 text-xs sm:text-sm mt-1 font-mono">
             {isGoodSkin ? "EXCELLENT CONDITION DETECTED" : "MULTI-ANGLE ANALYSIS REPORT"} | REF: {Math.random().toString(36).substr(2, 9).toUpperCase()}
           </p>
         </div>
-        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center">
-             <div className="text-right border-r border-gray-200 pr-4">
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">Skin Age</p>
-                  <p className="font-mono font-bold text-black">{diagnosis.faceArchitecture.skinAge} Years</p>
+        <div className="flex flex-row sm:flex-row gap-3 sm:gap-4 items-center justify-between w-full md:w-auto">
+             <div className="text-left md:text-right border-r border-gray-200 pr-4">
+                  <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">Skin Age</p>
+                  <p className="font-mono font-bold text-black text-sm sm:text-base">{diagnosis.faceArchitecture.skinAge} Years</p>
               </div>
             <button 
               onClick={handleDownloadPDF}
               disabled={isGeneratingPdf}
-              className="ml-4 px-4 py-2 bg-black text-white text-xs font-bold uppercase rounded hover:bg-gray-800 transition-colors flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-black text-white text-[11px] sm:text-xs font-bold uppercase rounded hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95 shrink-0"
             >
-              {isGeneratingPdf ? 'Processing PDF...' : 'Download Clinical Report'}
+              {isGeneratingPdf ? 'Processing...' : 'Download Report'}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         
         {/* Left Column: Visuals (Angle Switcher) (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
           
           {/* Main Visual Carousel */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-gray-200">
              {/* Concern Toggles */}
-             <div className="flex flex-wrap gap-2 mb-4">
+             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                 {(['All', 'Inflammation', 'Dryness', 'Pigmentation', 'Aging'] as OverlayCategory[]).map(cat => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
-                    className={`text-xs px-3 py-1.5 rounded-full font-bold transition-all border ${
+                    className={`text-[11px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold transition-all border ${
                       activeCategory === cat 
                         ? 'bg-black text-white border-black' 
                         : 'bg-white text-gray-500 border-gray-200 hover:border-black hover:text-black'
@@ -301,7 +301,7 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
              </div>
 
              {/* Main Stage */}
-             <div className="relative rounded-lg overflow-hidden bg-gray-50 border border-gray-100 aspect-[3/4] mb-4">
+             <div className="relative rounded-lg overflow-hidden bg-gray-50 border border-gray-100 aspect-[3/4] mb-3 sm:mb-4">
                 <img
                   ref={imageRef}
                   src={URL.createObjectURL(getCurrentImage())}
@@ -320,7 +320,7 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
                   <button
                     key={view}
                     onClick={() => setCurrentView(view)}
-                    className={`relative rounded-md overflow-hidden border transition-all h-20 ${
+                    className={`relative rounded-md overflow-hidden border transition-all h-16 sm:h-20 ${
                       currentView === view ? 'border-black ring-1 ring-black' : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -329,7 +329,7 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
                        className="w-full h-full object-cover grayscale-[20%]" 
                        alt={view}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] font-bold text-center py-0.5">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[9px] sm:text-[10px] font-bold text-center py-0.5">
                       {view}
                     </div>
                   </button>
@@ -339,19 +339,19 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
 
            {/* LIFESTYLE TRIGGERS (Face Mapping) */}
            {diagnosis.lifestyle_triggers && diagnosis.lifestyle_triggers.length > 0 && (
-            <div className="bg-white p-5 rounded-xl border border-gray-200">
-              <h3 className="font-bold text-black mb-3 flex items-center gap-2">
-                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-200">
+              <h3 className="font-bold text-black text-sm sm:text-base mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-black shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 Lifestyle Root Causes
               </h3>
               <div className="space-y-3">
                 {diagnosis.lifestyle_triggers.map((trigger, i) => (
                   <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                    <p className="text-xs font-bold text-gray-500 uppercase mb-1">{trigger.issue}</p>
-                    <p className="text-sm font-semibold text-black mb-1">
+                    <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1">{trigger.issue}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-black mb-1">
                       Did you know? <span className="text-black underline decoration-dotted">{trigger.trigger}</span> could be the cause.
                     </p>
-                    <p className="text-xs text-gray-500 italic">Try this: {trigger.habit}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-500 italic">Try this: {trigger.habit}</p>
                   </div>
                 ))}
               </div>
@@ -360,14 +360,14 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
 
           {/* Skin Strengths */}
           {diagnosis.positiveAttributes && diagnosis.positiveAttributes.length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <h3 className="font-bold text-black mb-3 flex items-center gap-2">
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200">
+              <h3 className="font-bold text-black text-sm sm:text-base mb-3 flex items-center gap-2">
+                 <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                  Clinical Strengths
               </h3>
               <ul className="space-y-2">
                 {diagnosis.positiveAttributes.map((attr, i) => (
-                  <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
+                  <li key={i} className="flex items-start gap-2 text-gray-700 text-xs sm:text-sm">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-black flex-shrink-0"></span>
                     {attr}
                   </li>
@@ -379,60 +379,60 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
 
         {/* Right Column: Data (7 cols) */}
         <div className="lg:col-span-7 flex flex-col">
-            <h3 className="font-bold text-black mb-4 flex items-center gap-2 text-lg">
-                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+            <h3 className="font-bold text-black mb-3 sm:mb-4 flex items-center gap-2 text-base sm:text-lg">
+                <svg className="w-5 h-5 text-black shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                 Detailed Zone Analysis
             </h3>
             
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-3 sm:space-y-4">
               {diagnosis.zones.map((zone, idx) => (
                 <div key={idx} className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm transition-all hover:border-black">
                   
                   {/* Accordion Header */}
                   <button 
                     onClick={() => setExpandedZone(expandedZone === zone.zoneName ? null : zone.zoneName)}
-                    className={`w-full flex items-center justify-between p-4 transition-colors ${expandedZone === zone.zoneName ? 'bg-gray-50' : 'bg-white hover:bg-gray-50'}`}
+                    className={`w-full flex items-center justify-between p-3.5 sm:p-4 transition-colors ${expandedZone === zone.zoneName ? 'bg-gray-50' : 'bg-white hover:bg-gray-50'}`}
                   >
-                    <div className="flex items-center gap-4">
-                       <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border ${
+                    <div className="flex items-center gap-3 sm:gap-4">
+                       <span className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border shrink-0 ${
                          zone.issues.length > 0 ? 'border-black text-black bg-white' : 'border-gray-300 text-gray-400 bg-gray-50'
                        }`}>
                          {idx + 1}
                        </span>
                        <div className="text-left">
-                          <h4 className="font-bold text-black">{zone.zoneName}</h4>
-                          <p className="text-xs text-gray-500">
+                          <h4 className="font-bold text-black text-sm sm:text-base">{zone.zoneName}</h4>
+                          <p className="text-[11px] sm:text-xs text-gray-500">
                              Oil: <span className="font-medium text-black">{zone.oilLevel}</span> • Texture: <span className="font-medium text-black">{zone.textureScore}/10</span>
                           </p>
                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                        {zone.issues.length > 0 && (
-                          <span className="text-xs font-medium text-black border border-black px-2 py-1 rounded-full">{zone.issues.length} Concerns</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-black border border-black px-2 py-0.5 rounded-full">{zone.issues.length} Concerns</span>
                        )}
-                       <svg className={`w-5 h-5 text-gray-400 transform transition-transform ${expandedZone === zone.zoneName ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                       <svg className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transform transition-transform ${expandedZone === zone.zoneName ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </div>
                   </button>
 
                   {/* Accordion Content */}
                   {expandedZone === zone.zoneName && (
-                    <div className="p-5 border-t border-gray-100 bg-white animate-fade-in">
+                    <div className="p-4 sm:p-5 border-t border-gray-100 bg-white animate-fade-in">
                        {zone.issues.length === 0 ? (
-                         <div className="text-center py-4 text-gray-500 flex flex-col items-center">
+                         <div className="text-center py-4 text-gray-500 flex flex-col items-center text-xs sm:text-sm">
                            <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                           <p>No major concerns detected in this zone.</p>
-                           <p className="text-sm">You are doing a great job maintaining this area!</p>
+                           <p className="font-medium">No major concerns detected in this zone.</p>
+                           <p className="text-xs text-gray-400 mt-0.5">You are doing a great job maintaining this area!</p>
                          </div>
                        ) : (
-                         <div className="space-y-6">
+                         <div className="space-y-4 sm:space-y-6">
                             {zone.issues.map((issue, i) => (
-                               <div key={i} className="pl-4 border-l-2 border-black">
-                                  <div className="flex justify-between items-start mb-2">
+                               <div key={i} className="pl-3 sm:pl-4 border-l-2 border-black">
+                                  <div className="flex justify-between items-start mb-2 gap-2">
                                      <div>
-                                        <h5 className="font-bold text-black text-lg">{issue.commonName}</h5>
-                                        <p className="font-mono text-xs text-gray-500 uppercase tracking-wide">{issue.medicalTerm}</p>
+                                        <h5 className="font-bold text-black text-base sm:text-lg">{issue.commonName}</h5>
+                                        <p className="font-mono text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">{issue.medicalTerm}</p>
                                      </div>
-                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase border ${
+                                     <span className={`px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase border shrink-0 ${
                                         issue.severity === 'Severe' ? 'border-black text-black' : 
                                         issue.severity === 'Moderate' ? 'border-gray-400 text-gray-700' : 'border-gray-200 text-gray-500'
                                      }`}>
@@ -440,14 +440,14 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
                                      </span>
                                   </div>
                                   
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
                                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        <p className="text-xs text-gray-400 font-bold uppercase mb-1">Root Cause</p>
-                                        <p className="text-sm text-black leading-snug">{issue.rootCause}</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Root Cause</p>
+                                        <p className="text-xs sm:text-sm text-black leading-snug">{issue.rootCause}</p>
                                      </div>
                                      <div className="bg-white p-3 rounded-lg border border-black">
-                                        <p className="text-xs text-black font-bold uppercase mb-1">Clinical Strategy</p>
-                                        <p className="text-sm text-black leading-snug">{issue.cureStrategy}</p>
+                                        <p className="text-[10px] text-black font-bold uppercase mb-1">Clinical Strategy</p>
+                                        <p className="text-xs sm:text-sm text-black leading-snug">{issue.cureStrategy}</p>
                                      </div>
                                   </div>
                                </div>
@@ -461,35 +461,35 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ diagnosis, images, on
             </div>
 
             {/* Dermatologist Note */}
-            <div className="mt-8 bg-black text-white p-6 rounded-xl shadow-lg">
-                <h4 className="font-bold text-white mb-2 flex items-center gap-2">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <div className="mt-6 sm:mt-8 bg-black text-white p-5 sm:p-6 rounded-xl shadow-lg">
+                <h4 className="font-bold text-white text-sm sm:text-base mb-2 flex items-center gap-2">
+                   <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                    Clinical Note
                 </h4>
-                <p className="text-sm leading-relaxed opacity-90 italic">
+                <p className="text-xs sm:text-sm leading-relaxed opacity-90 italic">
                    "{diagnosis.summary}"
                 </p>
             </div>
 
             <button
               onClick={onProceed}
-              className="w-full mt-6 py-4 bg-white border-2 border-black text-black hover:bg-black hover:text-white rounded-xl font-bold text-lg transition-all transform flex items-center justify-center gap-2"
+              className="w-full mt-4 sm:mt-6 py-3.5 sm:py-4 bg-white border-2 border-black text-black hover:bg-black hover:text-white rounded-xl font-bold text-base sm:text-lg transition-all transform flex items-center justify-center gap-2 active:scale-[0.99]"
             >
               Generate Budget-Optimized Routine <span className="">→</span>
             </button>
 
             {/* Cross-Marketing Banner */}
-            <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="mt-6 sm:mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider mb-2">
+                <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider mb-2">
                   Beta 🧪
                 </div>
-                <h4 className="text-xl font-bold text-slate-900 mb-1">Curious about your hair health?</h4>
-                <p className="text-sm text-slate-600">Try our new AI Hair & Scalp Analysis tool to discover your true hair type and scalp condition.</p>
+                <h4 className="text-lg sm:text-xl font-bold text-slate-900 mb-1">Curious about your hair health?</h4>
+                <p className="text-xs sm:text-sm text-slate-600">Try our new AI Hair & Scalp Analysis tool to discover your true hair type and scalp condition.</p>
               </div>
               <button 
                 onClick={() => navigate('/scan/hair')}
-                className="shrink-0 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm"
+                className="shrink-0 bg-blue-600 text-white px-5 py-3 rounded-xl font-bold text-xs sm:text-sm hover:bg-blue-700 active:scale-95 transition-all text-center shadow-sm"
               >
                 Scan Hair Now
               </button>
